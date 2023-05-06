@@ -12,19 +12,25 @@ def xml_to_csv(path):
         tree = ET.parse(xml_file)
         root = tree.getroot()
         for member in root.findall('object'):
-            value = (root.find('filename').text,
-                     int(root.find('size')[0].text),
-                     int(root.find('size')[1].text),
-                     member[0].text,
-                     int(member[4][0].text),
-                     int(member[4][1].text),
-                     int(member[4][2].text),
-                     int(member[4][3].text)
-                     )
+            filename = root.find('filename').text
+            width = int(root.find('size')[0].text)
+            height = int(root.find('size')[1].text)
+            class_name = member[0].text
+            xmin, ymin, xmax, ymax = None, None, None, None
+
+            # Verifica si el objeto tiene una etiqueta de caja delimitadora
+            if member.find('bndbox') is not None:
+                xmin = int(member.find('bndbox/xmin').text)
+                ymin = int(member.find('bndbox/ymin').text)
+                xmax = int(member.find('bndbox/xmax').text)
+                ymax = int(member.find('bndbox/ymax').text)
+
+            value = (filename, width, height, class_name, xmin, ymin, xmax, ymax)
             xml_list.append(value)
     column_name = ['filename', 'width', 'height', 'class', 'xmin', 'ymin', 'xmax', 'ymax']
     xml_df = pd.DataFrame(xml_list, columns=column_name)
     return xml_df
+
 
 def main():
     for folder in ['train','validation']:
