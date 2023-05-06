@@ -9,7 +9,7 @@ TFG-LynxIBDetect is a project developed as part of a Final Degree Project (TFG) 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/jgamero-ibrobotics/TFG-LynxIBDetect.git
+git clone https://github.com/jgamero-ibrobotics/TFG-LynxIBDetect.git ```bash
 
 
 
