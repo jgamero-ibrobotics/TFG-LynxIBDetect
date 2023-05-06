@@ -42,22 +42,9 @@ show_results = args.noshow_results # Defaults to True
 
 IM_NAME = args.image
 IM_DIR = args.imagedir
+CWD_PATH = os.getcwd() # Get path to current working directory
+RESULTS_DIR ='results' # Folder to save results images and data to
 
-# Get path to current working directory
-CWD_PATH = os.getcwd()
-
-# Define path to images and grab all image filenames
-# if IM_DIR:
-#     PATH_TO_IMAGES = os.path.join(CWD_PATH,IM_DIR)
-#     images = glob.glob(PATH_TO_IMAGES + '/*.jpg') + glob.glob(PATH_TO_IMAGES + '/*.png') + glob.glob(PATH_TO_IMAGES + '/*.bmp')
-#     if save_results:
-RESULTS_DIR ='results'
-
-# elif IM_NAME:
-#     PATH_TO_IMAGES = os.path.join(CWD_PATH,IM_NAME)
-#     images = glob.glob(PATH_TO_IMAGES)
-#     if save_results:
-#         RESULTS_DIR = 'results'
 
 # Import TensorFlow libraries
 # If tflite_runtime is installed, import interpreter from tflite_runtime, else import from regular tensorflow
@@ -89,7 +76,6 @@ input_std = 127.5
 # Check output layer name to determine if this model was created with TF2 or TF1,
 # because outputs are ordered differently for TF2 and TF1 models
 outname = output_details[0]['name']
-
 if ('StatefulPartitionedCall' in outname): # This is a TF2 model
     boxes_idx, classes_idx, scores_idx = 1, 3, 0
 else: # This is a TF1 model
@@ -98,9 +84,7 @@ else: # This is a TF1 model
 # Función para capturar una imagen de la cámara web
 def capture_image():
     cap = cv2.VideoCapture(0)  # Abrir la cámara web
-
     ret, frame = cap.read()  # Capturar un frame de video
-
     cap.release()  # Liberar la cámara
 
     return frame
@@ -119,8 +103,8 @@ def capture_images(num_images):
             time.sleep(1)
         
         image = capture_image()  # Capturar imagen de la cámara web 
-        file_name = f'image_{i+1}.jpg'
-        save_image(image, file_name)  # Guardar imagen en un archivo
+        #file_name = f'image_{i+1}.jpg'
+        #save_image(image, file_name)  # Guardar imagen en un archivo
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
         imH, imW, _ = image.shape 
         image_resized = cv2.resize(image_rgb, (width, height))
@@ -165,7 +149,6 @@ def capture_images(num_images):
                     detections.append([object_name, scores[i], xmin, ymin, xmax, ymax])
                     
         # cv2.imshow('Object detector', image)
-        
         # # Press any key to continue to next image, or press 'q' to quit
         # if cv2.waitKey(0) == ord('q'):
         #     break
@@ -179,7 +162,7 @@ def capture_images(num_images):
         txt_savepath = os.path.join(CWD_PATH,RESULTS_DIR,txt_result_fn)
 
         # Save image
-        file_name = f'image_res_{j+1}.jpg'
+        file_name = f'/home/pi/TFG-LynxIBDetect/Detections/image_res_{j+1}.jpg'
         j=1+j
         save_image(image, file_name)  # Guardar imagen en un archivo
 
