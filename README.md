@@ -1,8 +1,18 @@
 # TFG-LynxIBDetect
 
-Este repositorio contiene el código desarrollado como parte del Trabajo de Fin de Grado (TFG) de <tu nombre>, titulado "<título del TFG>". El objetivo principal de este proyecto es desarrollar un sistema de detección de personas en tiempo real utilizando una cámara y el modelo de aprendizaje profundo [YOLO](https://pjreddie.com/darknet/yolo/).
+This repository contains the code developed as part of the Final Degree Project (TFG) by Jesús Gamero, titled "Implementación de un sistema de detección de linces ibéricos mediante inteligencia artificial en una Raspberry Pi 3, para su control y seguimiento".
 
-## Instalación
+## Installation
 
-1. Clona este repositorio en tu ordenador:
+1. Clone this repository on your computer:
+
+git clone https://github.com/jgamero-ibrobotics/TFG-LynxIBDetect.git
+
+
+## Usage
+
+1. Run detection:
+
+
+
 
