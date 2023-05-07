@@ -10,6 +10,7 @@ import sys
 import glob
 import importlib.util
 import dropbox
+from dropbox.exceptions import ApiError
 
 
 # Define and parse input arguments
@@ -89,12 +90,26 @@ else: # This is a TF1 model
 
 
 # Obtén un token de acceso válido para utilizar la API de Dropbox
-TOKEN = 'sl.Bd5yr_vClbwY9fmRDIt6niMzslvw9Tf7tBBwO1i5I2vsRLNg--OfryoeUGwrxF-KOdcUV_0fs1CjetOujYkgxDVgf9x8i35C4_THXgm9AjhfmYqfDAVdBnGL45UhlaojtaKRHxMnfPU'
+TOKEN = 'sl.Bd9ybPPWm9fuHKetiF4GT-v7GUYkqaE06V07XdMuSv7khyoGNCRn6BdPaYu0Vj5oFdNhSWRn34c-UmvnoWamn57000Y-VSc-PX9aoBgPMhZAGXSwLvGG0HPPQiTaxntfmoCPOXEApOg'
 # Crea una instancia del cliente de Dropbox
 dbx = dropbox.Dropbox(TOKEN)
 # Ruta al directorio en Dropbox donde se guardarán las imágenes y los resultados
 remote_directory = '/Detections'
-dbx.files_delete(remote_directory)
+#dbx.files_delete(remote_directory)
+try:
+    dbx.files_get_metadata(remote_directory)
+    dbx.files_delete(remote_directory)
+    print(f"Directorio {remote_directory} eliminado correctamente")
+except dropbox.exceptions.ApiError as e:
+    error = e.error
+    if isinstance(error, dropbox.files.GetMetadataError) and error.is_path():
+        if error.get_path().is_not_found():
+            print(f"El directorio {remote_directory} no existe")
+        else:
+            print(f"Error al obtener metadatos del directorio {remote_directory}: {error}")
+    else:
+        print(f"Error desconocido al eliminar el directorio {remote_directory}: {e}")
+
 
 # Función para capturar una imagen de la cámara web
 def capture_image():
