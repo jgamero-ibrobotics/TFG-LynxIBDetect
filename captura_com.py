@@ -90,7 +90,7 @@ else: # This is a TF1 model
 
 
 # Obtén un token de acceso válido para utilizar la API de Dropbox
-TOKEN = 'sl.Bd9ybPPWm9fuHKetiF4GT-v7GUYkqaE06V07XdMuSv7khyoGNCRn6BdPaYu0Vj5oFdNhSWRn34c-UmvnoWamn57000Y-VSc-PX9aoBgPMhZAGXSwLvGG0HPPQiTaxntfmoCPOXEApOg'
+TOKEN = 'sl.Bd9ZClhMsIUBJR1F5GpyCK40J0X75yLMqhURcJ5w34qo776nFPLVpxNPpw0v6vXAWx0B2t_ojcYqWLCOHs50XOE9C-X3N-HkKn7HXkJyesVyN551nbUWHuwUIzccvGZi8K-2P7gJYtc'
 # Crea una instancia del cliente de Dropbox
 dbx = dropbox.Dropbox(TOKEN)
 # Ruta al directorio en Dropbox donde se guardarán las imágenes y los resultados
@@ -142,6 +142,7 @@ def capture_images(num_images):
     for image_file  in image_files: # Para cada imagen en el directorio corro detección
         # Obtener la ruta completa de la imagen
         image_path = os.path.join(image_dir, image_file)
+        
         # Cargar la imagen con OpenCV
         image = cv2.imread(image_path)
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  

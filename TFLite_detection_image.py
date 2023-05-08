@@ -227,6 +227,7 @@ for image_path in images:
 
         # Save image
         cv2.imwrite(image_savepath, image)
+        print('Saved to %s' % (image_savepath))
 
         # Write results to text file
         # (Using format defined by https://github.com/Cartucho/mAP, which will make it easy to calculate mAP)
