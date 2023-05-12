@@ -152,7 +152,7 @@ else: # This is a TF1 model
 
 
 # Configuración de Dropbox
-access_token = 'sl.BeOmu_xGFxNh_V_wriQuorlkFNxFMFLd1PrqhtYotKMJjcGCBpjMlSw4-yHMO7Js8ZKpAgTySW1mYTULb7LYTiPSepJQ94-YxqZlVSp2RYP6gt-RoujZmJ7KbpE70QFe1o-ZMEgFECA'
+access_token = 'sl.BeTL8Ac36o4je5af8mmUK7WG8374A-WZNO8GfEklnivKpGNtKmkC3G50bkXBSEaoXpGGbwGKtVn6dFCbWkg75giMSFVbOSuBc-wfNd8DDEpJ8OU64vBEITVLqQRwPeOq6OliG-y4ZcA'
 dropbox_folder = '/test'
 
 # Directorio local para descargar los archivos
@@ -232,9 +232,9 @@ for file_entry in file_list:
 
             if max_iou_score > 0.7 and clase_ref == clase_det:
                 Tp = Tp + 1
-            elif clase_ref == clase_det and max_iou_score < 0.7:
+            elif clase_ref != clase_det and max_iou_score > 0.7:
                 Fp = Fp + 1
-            elif max_iou_score > 0.7 and clase_ref != clase_det:
+            else:
                 Fn = Fn + 1 
 
             iou_scores.append(max_iou_score)
