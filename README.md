@@ -18,12 +18,16 @@ cd TFG-LynxIBDetect
 ```
 
 
-2. Install virtualenv:
+2. Install virtualenv and create a virtual environment:
 
 ```bash
 sudo pip3 install virtualenv 
 ```
+Then, create the "tflite1-env" virtual environment by issuing:
 
+```bash
+python3 -m venv tflite1-env
+```
 
 3. Activate the environment by issuing:
 
@@ -33,7 +37,7 @@ source tflite1-env/bin/activate
 
 ## Install TensorFlow Lite dependencies and OpenCV
 
-1. This shell script will automatically download and install all the packages and dependencies:
+This shell script will automatically download and install all the packages and dependencies:
 
 ```bash
 bash get_pi_requirements.sh
@@ -41,7 +45,7 @@ bash get_pi_requirements.sh
 
 ## Run the TensorFlow Lite model
 
-1. Runing the main script that simulates the camera trap behaviour:
+Runing the main script that simulates the camera trap behaviour:
 
 ```bash
 python3 captura_com.py --modeldir=LynxDetectv2
