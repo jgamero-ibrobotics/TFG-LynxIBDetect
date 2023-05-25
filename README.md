@@ -17,7 +17,6 @@ git clone https://github.com/jgamero-ibrobotics/TFG-LynxIBDetect.git
 cd TFG-LynxIBDetect
 ```
 
-
 2. Install virtualenv and create a virtual environment:
 
 ```bash
