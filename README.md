@@ -33,6 +33,7 @@ python3 -m venv tflite1-env
 ```bash
 source tflite1-env/bin/activate
 ```
+A virtual environment is an isolated environment that allows you to install Python packages and their dependencies without affecting other projects or the global Python environment on your system.
 
 ## Install TensorFlow Lite dependencies and OpenCV
 
