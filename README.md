@@ -13,6 +13,10 @@ TFG-LynxIBDetect is a project developed as part of a Final Degree Project (TFG) 
 git clone https://github.com/jgamero-ibrobotics/TFG-LynxIBDetect.git 
 ```
 
+```bash
+cd TFG-LynxIBDetect
+```
+
 
 2. Install virtualenv:
 
