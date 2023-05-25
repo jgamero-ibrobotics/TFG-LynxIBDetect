@@ -27,7 +27,7 @@ sudo pip3 install virtualenv
 source tflite1-env/bin/activate
 ```
 
-# Install TensorFlow Lite dependencies and OpenCV
+## Install TensorFlow Lite dependencies and OpenCV
 
 1. This shell script will automatically download and install all the packages and dependencies:
 
@@ -35,7 +35,7 @@ source tflite1-env/bin/activate
 bash get_pi_requirements.sh
 ```
 
-# Run the TensorFlow Lite model
+## Run the TensorFlow Lite model
 
 1. Runing the main script that simulates the camera trap behaviour:
 
