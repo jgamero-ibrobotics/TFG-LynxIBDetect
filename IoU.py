@@ -6,6 +6,19 @@ import cv2
 import numpy as np
 import xml.etree.ElementTree as ET
 
+def darken_if_dark_image(image, threshold_brightness, darkness_factor):
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    brightness = np.mean(gray_image)
+
+    if brightness < threshold_brightness:
+        darkened_image = np.copy(image)
+        # 1 es más brillante, 0 es más oscuro
+        darkened_image = darkened_image.astype(np.float32) * darkness_factor # Multiplicar por un factor de oscuridad
+        darkened_image = np.clip(darkened_image, 0, 255).astype(np.uint8) # Limitar los valores entre 0 y 255
+        return darkened_image
+    else:
+        return image
+
 def read_xml_file(xml_file):
     tree = ET.parse(xml_file)
     root = tree.getroot()
@@ -19,9 +32,9 @@ def read_xml_file(xml_file):
  
     return references
 
-def apply_detection_model(image_path):
+def apply_detection_model(image):
     # Cargar la imagen con OpenCV
-    image = cv2.imread(image_path)
+    # image = cv2.imread(image_path)
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
     imH, imW, _ = image.shape 
     image_resized = cv2.resize(image_rgb, (width, height))
@@ -97,6 +110,11 @@ parser.add_argument('--save_results', help='Save labeled images and annotation d
                     action='store_true')
 parser.add_argument('--noshow_results', help='Don\'t show result images (only use this if --save_results is enabled)',
                     action='store_false')
+parser.add_argument('--darken_image', help='Darken image for testing in low light conditions',
+                    action='store_true')
+parser.add_argument('--archivo_resultados', help='Nombre del archivo donde se guardan los resultados',
+                    default='resultados.txt')
+
 
 args = parser.parse_args()
 
@@ -104,6 +122,9 @@ args = parser.parse_args()
 MODEL_NAME = args.modeldir
 GRAPH_NAME = args.graph
 LABELMAP_NAME = args.labels
+darken_image = args.darken_image
+archivo_resultados = args.archivo_resultados
+
 
 min_conf_threshold = float(args.threshold)
 
@@ -152,8 +173,11 @@ else: # This is a TF1 model
 
 
 # Configuración de Dropbox
-access_token = 'sl.BeTL8Ac36o4je5af8mmUK7WG8374A-WZNO8GfEklnivKpGNtKmkC3G50bkXBSEaoXpGGbwGKtVn6dFCbWkg75giMSFVbOSuBc-wfNd8DDEpJ8OU64vBEITVLqQRwPeOq6OliG-y4ZcA'
-dropbox_folder = '/test'
+access_token = 'sl.BfA99zcEzQmWLxVPHYhahwEb0yagaMScQxcm14_VMAt5bBCs790ncJnT-3ZygoyAlKP7d2PK4xrZaeH99oK1pAJxuTSLl1iiTzRTuCzy9YXFtqLmSLfJBy4sbSYxaHkFiHGk1ugfU6s'
+dropbox_folder_xml = '/pruebaXML'
+dropbox_folder_jpg = '/pruebaJPG'
+# dropbox_folder_xml = '/prueba _lince_pocaluzXML'
+# dropbox_folder_jpg = '/prueba _lince_pocaluzJPG'
 
 # Directorio local para descargar los archivos
 local_folder = '/home/pi/TFG-LynxIBDetect/IoU'
@@ -166,7 +190,7 @@ if not os.path.exists(local_folder):
 client = dropbox.Dropbox(access_token)
 
 # Obtener la lista de archivos en la carpeta de Dropbox
-file_list = client.files_list_folder(dropbox_folder).entries
+file_list = client.files_list_folder(dropbox_folder_xml).entries
 
 
 for nombre_archivo in os.listdir("/home/pi/TFG-LynxIBDetect/IoU"):
@@ -177,18 +201,26 @@ for nombre_archivo in os.listdir("/home/pi/TFG-LynxIBDetect/IoU"):
 j = 0
 k = 0
 iou_total = 0
-Tp = 0
-Fp = 0
-Fn = 0
+resultados = {
+    "person-like": {"TP": 0, "FP": 0, "FN": 0},
+    "person": {"TP": 0, "FP": 0, "FN": 0},
+    "Lynx pardinus": {"TP": 0, "FP": 0, "FN": 0},
+    "Fox": {"TP": 0, "FP": 0, "FN": 0},
+    "Rabbit": {"TP": 0, "FP": 0, "FN": 0},
+    "Cat": {"TP": 0, "FP": 0, "FN": 0},
+}
+size = len(file_list)
+print("Número de archivos:", size)
 for file_entry in file_list:
     # Obtener el nombre del archivo
     file_name = file_entry.name
+    print("Archivo: ", file_name)
 
     # Verificar si es un archivo XML
     if file_name.endswith('.xml'):
         # Descargar el archivo XML desde Dropbox
         xml_path = os.path.join(local_folder, file_name)
-        client.files_download_to_file(xml_path, f'{dropbox_folder}/{file_name}')
+        client.files_download_to_file(xml_path, f'{dropbox_folder_xml}/{file_name}')
 
         # Leer las coordenadas de boxA desde el archivo XML
         references = read_xml_file(xml_path)
@@ -198,65 +230,265 @@ for file_entry in file_list:
 
         # Descargar el archivo JPG desde Dropbox
         image_path = os.path.join(local_folder, image_file)
-        client.files_download_to_file(image_path, f'{dropbox_folder}/{image_file}')
+        client.files_download_to_file(image_path, f'{dropbox_folder_jpg}/{image_file}')
         # Aplicar el modelo de detección y obtener las predicciones de boxB
-        detections = apply_detection_model(image_path)
         image = cv2.imread(image_path)
+
+        if darken_image == True:
+            image = darken_if_dark_image(image, 255, 0.4) # 1 0.8 0.6 0.4 0.2
+            cv2.imwrite("/home/pi/TFG-LynxIBDetect/IoU/image_darken.jpg", image)
+
+        detections = apply_detection_model(image)
+        
 
         # Elimina el archivo local
         os.remove(image_path)
         os.remove(xml_path)
 
         iou_scores = [] 
-        for reference in references: # recorre cada box en el archivo xml
-            boxA = [reference[1],  reference[2],  reference[3],  reference[4]] # [xmin, ymin, xmax, ymax]
-            clase_ref = reference[0]
-            print('box Referencia')
-            print(boxA)
-            iou_scores_box = []
-            cv2.rectangle(image, (boxA[0],  boxA[1]), (boxA[2],  boxA[3]), (0, 255, 0), 2) # ground truth box
+        if True:
+
+            max_iou_score = []
+            clases_iou_max = []
+            list_max_iou_index = []
+            max_iou_index_ant = None
+
+            num_detections = len(detections)
+            num_references = len(references)
+
+            print("numero de referencias")    
+            print(len(references))
+            print("numero de detecciones")
+            print(len(detections))
+            # asigno a cada box de referencia un coeficiente maximo de IoU
             if detections == []: # si no hay detecciones
-                for i in range(len(boxA)):
+                for i in range(len(references)):
                     detections.append(["NONE", 0, 0, 0, 0, 0])
-            for detection in detections: # recorre cada box por objeto detectado
-                boxB = [detection[2],  detection[3],  detection[4],  detection[5]] # [xmin, ymin, xmax, ymax]
-                clase_det = detection[0]
-                cv2.rectangle(image, (boxB[0],  boxB[1]), (boxB[2],  boxB[3]), (0, 0, 255), 2) # detection box
-                print('box Detección')
-                print(boxB)
+            detections_aux = detections.copy()
+            for reference in references: # recorre cada box en el archivo xml
+                iou_scores_box = []
+                clases_det = []
+                boxA = [reference[1],  reference[2],  reference[3],  reference[4]] # [xmin, ymin, xmax, ymax]
+                print('box Referencia')
+                print(boxA)
 
-                # Calcular el coeficiente de IoU
-                iou_score = calculate_iou(boxA, boxB)
-                iou_scores_box.append(iou_score)
-            max_iou_score = max(iou_scores_box)
+                cv2.rectangle(image, (boxA[0],  boxA[1]), (boxA[2],  boxA[3]), (0, 255, 0), 2) # ground truth box
 
-            if max_iou_score > 0.7 and clase_ref == clase_det:
-                Tp = Tp + 1
-            elif clase_ref != clase_det and max_iou_score > 0.7:
-                Fp = Fp + 1
-            else:
-                Fn = Fn + 1 
+                for detection in detections: # recorre cada box por objeto detectado
+                    boxB = [detection[2],  detection[3],  detection[4],  detection[5]] # [xmin, ymin, xmax, ymax]
 
+                    cv2.rectangle(image, (boxB[0],  boxB[1]), (boxB[2],  boxB[3]), (0, 0, 255), 2) # detection box
+                    print('box Detección')
+                    print(boxB)
+
+                    # Calcular el coeficiente de IoU
+                    iou_score = calculate_iou(boxA, boxB)
+
+                    # [clase, IoU] en cada deteccion
+                    iou_scores_box.append(iou_score)
+                    clases_det.append(detection[0])
+                
+                # asigno a cada referencia un coeficiente maximo de IoU y su clase asignada
+                max_iou_index  = np.argmax(iou_scores_box) # indice del maximo coeficiente de IoU
+
+                if len(references) == num_detections: # si hay igual referencias que detecciones
+                    if max_iou_index == max_iou_index_ant: # si hay dos referencias asignadas a la misma deteccion
+                        max_iou_index = np.argsort(iou_scores_box)[-2] # segundo maximo coeficiente de IoU
+
+                max_iou_score.append(iou_scores_box[max_iou_index]) # maximo coeficiente de IoU
+                clases_iou_max.append(clases_det[max_iou_index]) # clase del objeto detectado con el maximo coeficiente de IoU
+
+                # elimino la deteccion con el maximo coeficiente de IoU para contabilizar falsos positivos
+                if len(references) < num_detections: 
+                    detections_aux[max_iou_index] = None
+
+                max_iou_index_ant = max_iou_index
+            # muestra coeficientes iou asignados a cada referencia
             iou_scores.append(max_iou_score)
+            print("El coeficiente de IoU es:", iou_scores)
+
+            # menos detecciones de las esperadas, hay falsos negativos
+            # igual numero de detecciones que de referencias, no hay falsos negativos
+            if len(references) >= num_detections:
+                for i in range(1,len(references)+1):
+                    if i <= num_detections: # solo contabiliza hasta las detecciones que hay 
+
+                        # tomamos primero las referencias con mayor iou ya que son las que tienen 
+                        # mayor probabilidad de ser correctas el resto seran falsos negativos
+
+                        iou_index  = np.argmax(max_iou_score) # indice del maximo coeficiente de IoU
+                        iou = max_iou_score[iou_index] # maximo coeficiente de IoU
+
+                        clase = clases_iou_max[iou_index] # clase del objeto detectado con el maximo coeficiente de IoU
+                        clase_ref = references[iou_index][0] # clase de la referencia con el maximo coeficiente de IoU
+                        
+                        clases_iou_max.pop(iou_index)
+                        max_iou_score.pop(iou_index)
+
+                        if iou > 0.5 and clase_ref == clase: #Verdadero Positivo
+                            resultados[clase_ref]["TP"] += 1
+                        elif clase_ref != clase and iou > 0.5: #Falso Positivo
+                            resultados[clase_ref]["FP"] += 1
+                        else: #Falso Negativo
+                            resultados[clase_ref]["FN"] += 1
+
+                    # no hay mas detecciones, hay falsos negativos
+                    else: 
+                        # tomamos primero las referencias con mayor iou ya que son las que tienen mayor probabilidad de ser correctas
+                        # el resto seran falsos negativos
+                        iou_index  = np.argmax(max_iou_score) # indice del maximo coeficiente de IoU
+                        clase_ref = references[iou_index][0]
+
+                        clases_iou_max.pop(iou_index)
+                        max_iou_score.pop(iou_index)
+
+                        resultados[clase_ref]["FN"] += 1 # asigna un falso negativo a la clase de la referencia
+
+            # mas detecciones de las esperadas, hay falsos positivos         
+            else:
+                for i in range(1,num_detections+1): 
+                    if i <= len(references): # solo contabiliza hasta las referencias que hay
+                        
+                        # tomamos primero las referencias con mayor iou ya que son las que tienen
+                        # mayor probabilidad de ser correctas el resto seran falsos positivos
+
+                        iou_index  = np.argmax(max_iou_score) # indice del maximo coeficiente de IoU
+                        iou = max_iou_score[iou_index] # maximo coeficiente de IoU
+
+                        clase = clases_iou_max[iou_index] # clase del objeto detectado con el maximo coeficiente de IoU
+                        clase_ref = references[iou_index][0]
+
+                        clases_iou_max.pop(iou_index)
+                        max_iou_score.pop(iou_index)
+
+                        if iou > 0.5 and clase_ref == clase: #Verdadero Positivo
+                            resultados[clase_ref]["TP"] += 1
+                        elif clase_ref != clase and iou > 0.5: #Falso Positivo
+                            resultados[clase_ref]["FP"] += 1
+                        else: #Falso Negativo
+                            resultados[clase_ref]["FN"] += 1
+                    
+                    # no hay mas referencias, hay falsos positivos
+                    else:
+                        for detection in detections_aux:
+                            if detection != None:
+                                resultados[detection[0]]["FP"] += 1 # asigna un falso positivo a la clase de la deteccion
+
+            
             k = k + 1
+        else:
+            for reference in references: # recorre cada box en el archivo xml
+                boxA = [reference[1],  reference[2],  reference[3],  reference[4]] # [xmin, ymin, xmax, ymax]
+                clase_ref = reference[0]
+                print('box Referencia')
+                print(boxA)
+                iou_scores_box = []
+                clases_det = []
+                cv2.rectangle(image, (boxA[0],  boxA[1]), (boxA[2],  boxA[3]), (0, 255, 0), 2) # ground truth box
+                if detections == []: # si no hay detecciones
+                    for i in range(len(boxA)):
+                        detections.append(["NONE", 0, 0, 0, 0, 0])
+                for detection in detections: # recorre cada box por objeto detectado
+                    boxB = [detection[2],  detection[3],  detection[4],  detection[5]] # [xmin, ymin, xmax, ymax]
+
+                    cv2.rectangle(image, (boxB[0],  boxB[1]), (boxB[2],  boxB[3]), (0, 0, 255), 2) # detection box
+                    print('box Detección')
+                    print(boxB)
+
+                    # Calcular el coeficiente de IoU
+                    iou_score = calculate_iou(boxA, boxB)
+                    iou_scores_box.append(iou_score)
+                    clases_det.append(detection[0])
+                    
+                max_iou_index  = np.argmax(iou_scores_box)
+                max_iou_score = iou_scores_box[max_iou_index]
+                clase_det = clases_det[max_iou_index]
+
+                print(clase_ref)
+                if max_iou_score > 0.5 and clase_ref == clase_det: #Verdadero Positivo
+                    resultados[clase_ref]["TP"] += 1
+                elif clase_ref != clase_det and max_iou_score > 0.5: #Falso Positivo
+                    resultados[clase_ref]["FP"] += 1
+                else: #Falso Negativo
+                    resultados[clase_ref]["FN"] += 1
+
+                iou_scores.append(max_iou_score)
+                k = k + 1
 
         file_name = f'/home/pi/TFG-LynxIBDetect/IoU/image_IoU_{j+1}.jpg'
         j=j+1
         #cv2.imwrite(file_name,image)  # Guardar imagen en un archivo
-        iou_total = sum(iou_scores) + iou_total
 
         #print(f"Archivo XML: {file_name}")
-        print("El coeficiente de IoU es:", iou_scores)
         print("---------------------------------------------")
 
+# Calcular los valores totales de TP, FP, FN
+Tp = sum(conteos["TP"] for conteos in resultados.values())
+Fp = sum(conteos["FP"] for conteos in resultados.values())
+Fn = sum(conteos["FN"] for conteos in resultados.values())
+
+
 print("   ")
-print("--------------RESULTADOS FINALES--------------")
-print("Verdaderos Positivos:", Tp)
-print("Falsos Positivos:", Fp)
-print("Falsos Negativos:", Fn)
+print("--------------RESULTADOS POR CLASE--------------")
+for clase, conteos in resultados.items():
+    print(clase)
+    print("Verdaderos Positivos (TP):", conteos["TP"])
+    print("Falsos Positivos (FP):", conteos["FP"])
+    print("Falsos Negativos (FN):", conteos["FN"])
+
+    precision = conteos["TP"]/(conteos["TP"]+conteos["FP"])
+    recall = conteos["TP"]/(conteos["TP"]+conteos["FN"])
+    f1_score = 2*((precision*recall)/(precision+recall))
+
+    print("Precision:", precision)
+    print("Recall:", recall)
+    print("F1 Score:", f1_score)
+    print("---------------------------------------------")
+
 precision = Tp/(Tp+Fp)
 recall = Tp/(Tp+Fn)
 f1_score = 2*((precision*recall)/(precision+recall))
+
+print("   ")
+print("--------------RESULTADOS GLOBALES--------------")
+print("Verdaderos Positivos:", Tp)
+print("Falsos Positivos:", Fp)
+print("Falsos Negativos:", Fn)
+
 print("Precision:", precision)
 print("Recall:", recall)
 print("F1 Score:", f1_score)
+print("---------------------------------------------")
+
+with open(archivo_resultados, "w") as file:
+    file.write("\n")
+    file.write("--------------RESULTADOS POR CLASE--------------\n")
+    for clase, conteos in resultados.items():
+        file.write(clase + "\n")
+        file.write("Verdaderos Positivos (TP): {}\n".format(conteos["TP"]))
+        file.write("Falsos Positivos (FP): {}\n".format(conteos["FP"]))
+        file.write("Falsos Negativos (FN): {}\n".format(conteos["FN"]))
+
+        precision = conteos["TP"] / (conteos["TP"] + conteos["FP"])
+        recall = conteos["TP"] / (conteos["TP"] + conteos["FN"])
+        f1_score = 2 * ((precision * recall) / (precision + recall))
+
+        file.write("Precision: {}\n".format(precision))
+        file.write("Recall: {}\n".format(recall))
+        file.write("F1 Score: {}\n".format(f1_score))
+        file.write("---------------------------------------------\n")
+
+    file.write("\n")
+    file.write("--------------RESULTADOS GLOBALES--------------\n")
+    file.write("Verdaderos Positivos: {}\n".format(Tp))
+    file.write("Falsos Positivos: {}\n".format(Fp))
+    file.write("Falsos Negativos: {}\n".format(Fn))
+
+    precision = Tp / (Tp + Fp)
+    recall = Tp / (Tp + Fn)
+    f1_score = 2 * ((precision * recall) / (precision + recall))
+
+    file.write("Precision: {}\n".format(precision))
+    file.write("Recall: {}\n".format(recall))
+    file.write("F1 Score: {}\n".format(f1_score))
+    file.write("---------------------------------------------\n")

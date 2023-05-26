@@ -10,6 +10,7 @@ import sys
 import glob
 import importlib.util
 import dropbox
+import threading
 from dropbox.exceptions import ApiError
 
 
@@ -90,7 +91,7 @@ else: # This is a TF1 model
 
 
 # Obtén un token de acceso válido para utilizar la API de Dropbox
-TOKEN = 'sl.Bd9ZClhMsIUBJR1F5GpyCK40J0X75yLMqhURcJ5w34qo776nFPLVpxNPpw0v6vXAWx0B2t_ojcYqWLCOHs50XOE9C-X3N-HkKn7HXkJyesVyN551nbUWHuwUIzccvGZi8K-2P7gJYtc'
+TOKEN = 'sl.Beozq37jUeH7SnLxvXQmQSBlnFmJP31phVpbq-AY4-1dMqWrHJfmXHQcGz2U9h6eAww6Tzafio4_oCBI1rhIww3MI9egd8Hsq5kyAczg2yQh9IwUaFsXP5LJCz0Von_CrwJlV2eRy1g'
 # Crea una instancia del cliente de Dropbox
 dbx = dropbox.Dropbox(TOKEN)
 # Ruta al directorio en Dropbox donde se guardarán las imágenes y los resultados
@@ -99,7 +100,7 @@ remote_directory = '/Detections'
 try:
     dbx.files_get_metadata(remote_directory)
     dbx.files_delete(remote_directory)
-    print(f"Directorio {remote_directory} eliminado correctamente")
+    # print(f"Directorio {remote_directory} eliminado correctamente")
 except dropbox.exceptions.ApiError as e:
     error = e.error
     if isinstance(error, dropbox.files.GetMetadataError) and error.is_path():
@@ -109,6 +110,21 @@ except dropbox.exceptions.ApiError as e:
             print(f"Error al obtener metadatos del directorio {remote_directory}: {error}")
     else:
         print(f"Error desconocido al eliminar el directorio {remote_directory}: {e}")
+
+
+def hilo(): 
+    while True:
+        print(f"\nHILO1: Presiona la tecla 'Enter' para capturar imagenes")
+        input()  # Esperar a que se presione la tecla Enter
+        capture_images(10)
+
+
+mutex = threading.Lock()
+capture_thread = threading.Thread(
+        target=hilo, args=()
+    )
+capture_thread.start()
+
 
 
 # Función para capturar una imagen de la cámara web
@@ -122,29 +138,37 @@ def capture_image():
 # Función para guardar la imagen en un archivo
 def save_image(image, file_name):
     cv2.imwrite(file_name, image)
-    print(f'Imagen guardada como {file_name}')
+   # print(f'Imagen guardada como {file_name}')
 
 # Capturar imágenes después de pulsar una tecla y esperar 10 segundos entre cada captura
 def capture_images(num_images):
-    global j
     for i in range(num_images):
         if i > 0:
-            print("Esperando 0.5 segundos...") 
+            print("HILO1: Esperando 0.5 segundos...") 
             time.sleep(0.5)
         image = capture_image()  # Capturar imagen de la cámara web 
-        file_name = f'/home/pi/TFG-LynxIBDetect/Detections/image_{i+1}.jpg'
+        file_name = f'/home/pi/TFG-LynxIBDetect/Capturas/image_{i+1}.jpg'
+        mutex.acquire()
         save_image(image, file_name)  # Guardar imagen en un archivo
+        mutex.release()
 
+def process_images():
+    global j
     # Obtener la lista de archivos en el directorio de imágenes
-    image_dir = '/home/pi/TFG-LynxIBDetect/Detections'
+    mutex.acquire()
+    image_dir = '/home/pi/TFG-LynxIBDetect/Capturas'
     image_files = [f for f in os.listdir(image_dir) if os.path.isfile(os.path.join(image_dir, f))]
+    mutex.release()
 
     for image_file  in image_files: # Para cada imagen en el directorio corro detección
+
         # Obtener la ruta completa de la imagen
+        print(f'HILO2: Procesando imagen {image_file}...')
         image_path = os.path.join(image_dir, image_file)
         
         # Cargar la imagen con OpenCV
         image = cv2.imread(image_path)
+        os.remove(image_path)
         image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
         imH, imW, _ = image.shape 
         image_resized = cv2.resize(image_rgb, (width, height))
@@ -201,14 +225,14 @@ def capture_images(num_images):
         txt_savepath = os.path.join(CWD_PATH,RESULTS_DIR,txt_result_fn)
 
         if not detections==[]: # Si hay detecciones subo. FILTRO
-            # Save image
+            # Save image with bounding boxes and labels
             file_name = f'/home/pi/TFG-LynxIBDetect/Detections/image_res_{j+1}.jpg'
             save_image(image, file_name)  # Guardar imagen en un archivo
 
             # Sube la imagen a Dropbox
             with open(file_name, 'rb') as f:
                 remote_filename = f'{remote_directory}/image_res_{j+1}.jpg'
-                print(remote_filename)
+                #print(remote_filename)
                 dbx.files_upload(f.read(), remote_filename)
             # Elimina el archivo local
             os.remove(file_name)
@@ -231,6 +255,7 @@ def capture_images(num_images):
             os.remove(results_filename)
             j=1+j
 
+
         # Write results to text file
         # (Using format defined by https://github.com/Cartucho/mAP, which will make it easy to calculate mAP)
         # with open(txt_savepath,'w') as f:
@@ -239,8 +264,7 @@ def capture_images(num_images):
 
 # Llamar a la función para capturar una imagen después de pulsar una tecla y esperar 10 segundos entre cada captura
 j=0
-while True:
-    print(f"\nPresiona la tecla 'Enter' para capturar imagenes")
-    input()  # Esperar a que se presione la tecla Enter
-    capture_images(10)
+while(True):
+    process_images()
+
 
