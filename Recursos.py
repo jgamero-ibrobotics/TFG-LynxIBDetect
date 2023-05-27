@@ -1,6 +1,7 @@
 import psutil
 import time
 import sys
+import matplotlib.pyplot as plt
 
 # Nombre del archivo de salida
 nombre_archivo = "/home/pi/TFG-LynxIBDetect/Resultados/mediciones.txt"
