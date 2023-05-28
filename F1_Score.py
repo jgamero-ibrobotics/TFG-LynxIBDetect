@@ -5,6 +5,9 @@ import argparse
 import cv2
 import numpy as np
 import xml.etree.ElementTree as ET
+import time
+
+
 
 def elimina_no_maximos(matriz, col, indice_preservar):
   
@@ -40,6 +43,9 @@ def read_xml_file(xml_file):
     return references
 
 def apply_detection_model(image):
+    global fps
+    global elapsed_time
+    global total_elapsed_time
     # Cargar la imagen con OpenCV
     # image = cv2.imread(image_path)
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
@@ -50,10 +56,16 @@ def apply_detection_model(image):
     if floating_model:
         input_data = (np.float32(input_data) - input_mean) / input_std
 
+    start_time = time.time()
     # Perform the actual detection by running the model with the image as input
     interpreter.set_tensor(input_details[0]['index'],input_data)
     interpreter.invoke()
-        
+    end_time = time.time()
+
+    elapsed_time = end_time - start_time
+    fps = 1 / elapsed_time
+    total_elapsed_time = total_elapsed_time + elapsed_time
+
     # Retrieve detection results
     boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0] # Bounding box coordinates of detected objects
     classes = interpreter.get_tensor(output_details[classes_idx]['index'])[0] # Class index of detected objects
@@ -131,6 +143,7 @@ GRAPH_NAME = args.graph
 LABELMAP_NAME = args.labels
 darken_image = args.darken_image
 archivo_resultados = '/home/pi/TFG-LynxIBDetect/Resultados/' + args.archivo_resultados
+archivo_resultados_rendimiento = '/home/pi/TFG-LynxIBDetect/Resultados/' + 'Rendimiento.txt'
 
 
 min_conf_threshold = float(args.threshold)
@@ -180,7 +193,7 @@ else: # This is a TF1 model
 
 
 # Configuración de Dropbox
-access_token = 'sl.BfLcES3orOdJTdx0_jkwOf9hsjZmDED8oAswnYLWC0cRzqx_ZlpN-9CROogftDAVabMrkyqYMaUO_ShlRueYKv0Bo7_2jqzp-P2ujFkPKME1KS1hYZ0ykrtOscf1bej5zNVYDSY3NDg'
+access_token = 'sl.BfMJETPPlnwsYyWpAfdAr1c5wNhWgYrzJ1o1hLVEFjfDhP9Z3KpsYkfUgKz34VkLeKrmuV8p6Q7jFKDAPYARAbscEqaJ7uktkcISE8oi59yH_2QwVEXMGBSN-CdlCv8fDIDfszEhErk'
 dropbox_folder_xml = '/pruebaXML'
 dropbox_folder_jpg = '/pruebaJPG'
 # dropbox_folder_xml = '/prueba _lince_pocaluzXML'
@@ -208,6 +221,7 @@ for nombre_archivo in os.listdir("/home/pi/TFG-LynxIBDetect/IoU"):
 j = 0
 k = 0
 iou_total = 0
+total_elapsed_time = 0
 resultados = {
     "person-like": {"TP": 0, "FP": 0, "FN": 0},
     "person": {"TP": 0, "FP": 0, "FN": 0},
@@ -218,188 +232,193 @@ resultados = {
 }
 size = len(file_list)
 print("Número de archivos:", size)
-for file_entry in file_list:
-    # Obtener el nombre del archivo
-    file_name = file_entry.name
-    print("Archivo: ", file_name)
 
-    # Verificar si es un archivo XML
-    if file_name.endswith('.xml'):
-        # Descargar el archivo XML desde Dropbox
-        xml_path = os.path.join(local_folder, file_name)
-        client.files_download_to_file(xml_path, f'{dropbox_folder_xml}/{file_name}')
+with open(archivo_resultados_rendimiento, 'w') as file:
+    file.write('Imagen\tTiempo de procesamiento (s)\tFPS\n')
+    for file_entry in file_list:
+        # Obtener el nombre del archivo
+        file_name = file_entry.name
+        print("Archivo: ", file_name)
 
-        # Leer las coordenadas de boxA desde el archivo XML
-        references = read_xml_file(xml_path)
-  
-        # Obtener el nombre del archivo de imagen relacionado
-        image_file = file_name.replace('.xml', '.jpg')
+        # Verificar si es un archivo XML
+        if file_name.endswith('.xml'):
+            # Descargar el archivo XML desde Dropbox
+            xml_path = os.path.join(local_folder, file_name)
+            client.files_download_to_file(xml_path, f'{dropbox_folder_xml}/{file_name}')
 
-        # Descargar el archivo JPG desde Dropbox
-        image_path = os.path.join(local_folder, image_file)
-        client.files_download_to_file(image_path, f'{dropbox_folder_jpg}/{image_file}')
-        # Aplicar el modelo de detección y obtener las predicciones de boxB
-        image = cv2.imread(image_path)
+            # Leer las coordenadas de boxA desde el archivo XML
+            references = read_xml_file(xml_path)
+    
+            # Obtener el nombre del archivo de imagen relacionado
+            image_file = file_name.replace('.xml', '.jpg')
 
-        if darken_image == True:
-            image = darken_if_dark_image(image, 255, 0.15) # 1 0.8 0.6 0.4 0.2
-            cv2.imwrite("/home/pi/TFG-LynxIBDetect/IoU/image_darken.jpg", image)
+            # Descargar el archivo JPG desde Dropbox
+            image_path = os.path.join(local_folder, image_file)
+            client.files_download_to_file(image_path, f'{dropbox_folder_jpg}/{image_file}')
+            # Aplicar el modelo de detección y obtener las predicciones de boxB
+            image = cv2.imread(image_path)
 
-        detections = apply_detection_model(image)
-        
+            if darken_image == True:
+                image = darken_if_dark_image(image, 255, 0.75) # 1 0.85 0.8 0.75 0.7 0.65 0.6 0.55 0.5 0.45 0.4 0.35 0.2 0.15
+         #                                                      1   2    3   4    5   6    7   8    9    10  11   12  13  14
+                cv2.imwrite("/home/pi/TFG-LynxIBDetect/IoU/image_darken.jpg", image)
 
-        # Elimina el archivo local
-        os.remove(image_path)
-        os.remove(xml_path)
 
-        iou_scores = []
-        max_iou_scores = []
-        clases_iou_max = []
-        clases_referencia = []
+            detections = apply_detection_model(image)
 
-        num_detections = len(detections)
-        num_references = len(references)
+            file.write(f'{k + 1}\t{elapsed_time}\t{fps}\n')
+            
 
-        print("numero de referencias")    
-        print(len(references))
-        print("numero de detecciones")
-        print(len(detections))
+            # Elimina el archivo local
+            os.remove(image_path)
+            os.remove(xml_path)
 
-        
-        # asigno a cada box de referencia un coeficiente maximo de IoU
-        if detections == []: # si no hay detecciones
-            for i in range(len(references)):
-                detections.append(["NONE", 0, 0, 0, 0, 0])
+            iou_scores = []
+            max_iou_scores = []
+            clases_iou_max = []
+            clases_referencia = []
 
-        elif len(detections) < len(references):
-            for i in range(len(references)):
-                if i < len(detections):
-                    continue
-                else:
+            num_detections = len(detections)
+            num_references = len(references)
+
+            print("numero de referencias")    
+            print(len(references))
+            print("numero de detecciones")
+            print(len(detections))
+
+            
+            # asigno a cada box de referencia un coeficiente maximo de IoU
+            if detections == []: # si no hay detecciones
+                for i in range(len(references)):
                     detections.append(["NONE", 0, 0, 0, 0, 0])
- 
 
-        matrix_iou = np.zeros((len(detections), len(references)))
-        
-        col = 0
-        for reference in references: # recorre cada box en el archivo xml
-            boxA = [reference[1],  reference[2],  reference[3],  reference[4]] # [xmin, ymin, xmax, ymax]
-            print('box Referencia')
-            print(boxA)
-            cv2.rectangle(image, (boxA[0],  boxA[1]), (boxA[2],  boxA[3]), (0, 255, 0), 2) # ground truth box
-            fil = 0 
-            for detection in detections: # recorre cada box por objeto detectado
-                boxB = [detection[2],  detection[3],  detection[4],  detection[5]] # [xmin, ymin, xmax, ymax]
-                cv2.rectangle(image, (boxB[0],  boxB[1]), (boxB[2],  boxB[3]), (0, 0, 255), 2) # detection box
-                print('box Detección')
-                print(boxB)
-                # Calcular el coeficiente de IoU
-                iou_score = calculate_iou(boxA, boxB)
-                matrix_iou[fil][col] = iou_score
-                fil = fil + 1
-            col = col + 1
-        # print(matrix_iou)
-        
-        iou_max_score = []
-        for col in range(num_references):
-            column = matrix_iou[:,col]
-            iou_max_index_col  = np.argmax(column)
-            row = matrix_iou[iou_max_index_col,:]
-            iou_max_index_row  = np.argmax(row)
-            if [iou_max_index_col, iou_max_index_row] == [iou_max_index_col, col]: # si el maximo IoU de la columna es el mismo que el maximo IoU de la fila
-                iou_max_score.append(column[iou_max_index_col])
-                clases_referencia.append(references[col][0])
-                clases_iou_max.append(detections[iou_max_index_col][0])
-                matrix_iou = elimina_no_maximos(matrix_iou, col, iou_max_index_col)
-            else:
-                while [iou_max_index_col, iou_max_index_row] != [iou_max_index_col, col]:
-                    column[iou_max_index_col] = 0
-                    iou_max_index_col  = np.argmax(column)
-                    
-                    row = matrix_iou[iou_max_index_col,:]
-                    iou_max_index_row  = np.argmax(row)
-                    if np.all(column == 0.0): # no se han producido detecciones para esta referencia
-                        break
-                matrix_iou = elimina_no_maximos(matrix_iou, col, iou_max_index_col)
-                iou_max_score.append(column[iou_max_index_col])
-                clases_referencia.append(references[col][0])
-                clases_iou_max.append(detections[iou_max_index_col][0])
+            elif len(detections) < len(references):
+                for i in range(len(references)):
+                    if i < len(detections):
+                        continue
+                    else:
+                        detections.append(["NONE", 0, 0, 0, 0, 0])
+    
 
-        print("El coeficiente de IoU es:", iou_max_score)
-
-
-        # menos detecciones de las esperadas, hay falsos negativos
-        # igual numero de detecciones que de referencias, no hay falsos negativos
-        if len(references) >= num_detections:
-            for i in range(1,len(references)+1):
-                if i <= num_detections: # solo contabiliza hasta las detecciones que hay 
-                    # tomamos primero las referencias con mayor iou ya que son las que tienen 
-                    # mayor probabilidad de ser correctas el resto seran falsos negativos
-                    iou_index  = np.argmax(iou_max_score) # indice del maximo coeficiente de IoU
-                    iou = iou_max_score[iou_index] # maximo coeficiente de IoU
-                    clase = clases_iou_max[iou_index] # clase del objeto detectado con el maximo coeficiente de IoU
-                    clase_ref = clases_referencia[iou_index] # clase de la referencia con el maximo coeficiente de IoU
-                    
-                    clases_iou_max.pop(iou_index)
-                    iou_max_score.pop(iou_index)
-
-                    if iou > 0.5 and clase_ref == clase: #Verdadero Positivo
-                        resultados[clase_ref]["TP"] += 1
-                    elif clase_ref != clase and iou > 0.5: #Falso Positivo
-                        resultados[clase_ref]["FP"] += 1
-                    else: #Falso Negativo
-                        resultados[clase_ref]["FN"] += 1
-                # no hay mas detecciones, hay falsos negativos
-                else: 
-                    # tomamos primero las referencias con mayor iou ya que son las que tienen mayor probabilidad de ser correctas
-                    # el resto seran falsos negativos
-                    iou_index  = np.argmax(iou_max_score) # indice del maximo coeficiente de IoU
-                    clase_ref = references[iou_index][0] # esta mal
-
-                    clases_iou_max.pop(iou_index)
-                    iou_max_score.pop(iou_index)
-
-                    resultados[clase_ref]["FN"] += 1 # asigna un falso negativo a la clase de la referencia
-
-        # mas detecciones de las esperadas, hay falsos positivos         
-        else:
-            for i in range(1,num_detections+1): 
-                if i <= len(references): # solo contabiliza hasta las referencias que hay
-                    
-                    # tomamos primero las referencias con mayor iou ya que son las que tienen
-                    # mayor probabilidad de ser correctas el resto seran falsos positivos
-                    iou_index  = np.argmax(iou_max_score) # indice del maximo coeficiente de IoU
-                    iou = iou_max_score[iou_index] # maximo coeficiente de IoU
-                    clase = clases_iou_max[iou_index] # clase del objeto detectado con el maximo coeficiente de IoU
-                    clase_ref = clases_referencia[iou_index]
-
-
-                    clases_iou_max.pop(iou_index)
-                    iou_max_score.pop(iou_index)
-
-                    if iou > 0.5 and clase_ref == clase: #Verdadero Positivo
-                        resultados[clase_ref]["TP"] += 1
-                    elif clase_ref != clase and iou > 0.5: #Falso Positivo
-                        resultados[clase_ref]["FP"] += 1
-                    else: #Falso Negativo
-                        resultados[clase_ref]["FN"] += 1
-                
-                # no hay mas referencias, hay falsos positivos
+            matrix_iou = np.zeros((len(detections), len(references)))
+            col = 0
+            for reference in references: # recorre cada box en el archivo xml
+                boxA = [reference[1],  reference[2],  reference[3],  reference[4]] # [xmin, ymin, xmax, ymax]
+                print('box Referencia')
+                print(boxA)
+                cv2.rectangle(image, (boxA[0],  boxA[1]), (boxA[2],  boxA[3]), (0, 255, 0), 2) # ground truth box
+                fil = 0 
+                for detection in detections: # recorre cada box por objeto detectado
+                    boxB = [detection[2],  detection[3],  detection[4],  detection[5]] # [xmin, ymin, xmax, ymax]
+                    cv2.rectangle(image, (boxB[0],  boxB[1]), (boxB[2],  boxB[3]), (0, 0, 255), 2) # detection box
+                    print('box Detección')
+                    print(boxB)
+                    # Calcular el coeficiente de IoU
+                    iou_score = calculate_iou(boxA, boxB)
+                    matrix_iou[fil][col] = iou_score
+                    fil = fil + 1
+                col = col + 1
+            
+            iou_max_score = []
+            for col in range(num_references):
+                column = matrix_iou[:,col]
+                iou_max_index_col  = np.argmax(column)
+                row = matrix_iou[iou_max_index_col,:]
+                iou_max_index_row  = np.argmax(row)
+                if [iou_max_index_col, iou_max_index_row] == [iou_max_index_col, col]: # si el maximo IoU de la columna es el mismo que el maximo IoU de la fila
+                    iou_max_score.append(column[iou_max_index_col])
+                    clases_referencia.append(references[col][0])
+                    clases_iou_max.append(detections[iou_max_index_col][0])
+                    matrix_iou = elimina_no_maximos(matrix_iou, col, iou_max_index_col)
                 else:
-                    for i in range(num_detections):
-                        if all(matrix_iou[i,:]) == all(np.zeros(num_references)):
-                            resultados[detections[i][0]]["FP"] += 1 # asigna un falso positivo a la clase de la deteccion
-        
-        k = k + 1
+                    while [iou_max_index_col, iou_max_index_row] != [iou_max_index_col, col]:
+                        column[iou_max_index_col] = 0
+                        iou_max_index_col  = np.argmax(column)
+                        
+                        row = matrix_iou[iou_max_index_col,:]
+                        iou_max_index_row  = np.argmax(row)
+                        if np.all(column == 0.0): # no se han producido detecciones para esta referencia
+                            break
+                    matrix_iou = elimina_no_maximos(matrix_iou, col, iou_max_index_col)
+                    iou_max_score.append(column[iou_max_index_col])
+                    clases_referencia.append(references[col][0])
+                    clases_iou_max.append(detections[iou_max_index_col][0])
 
-        # # file_name = f'/home/pi/TFG-LynxIBDetect/IoU/image_IoU_{j+1}.jpg'
-        file_name = f'/home/pi/TFG-LynxIBDetect/IoU/image_IoU.jpg'
-        j=j+1
-        cv2.imwrite(file_name,image)  # Guardar imagen en un archivo
+            print("El coeficiente de IoU es:", iou_max_score)
 
-        #print(f"Archivo XML: {file_name}")
-        print("---------------------------------------------")
 
+            # menos detecciones de las esperadas, hay falsos negativos
+            # igual numero de detecciones que de referencias, no hay falsos negativos
+            if len(references) >= num_detections:
+                for i in range(1,len(references)+1):
+                    if i <= num_detections: # solo contabiliza hasta las detecciones que hay 
+                        # tomamos primero las referencias con mayor iou ya que son las que tienen 
+                        # mayor probabilidad de ser correctas el resto seran falsos negativos
+                        iou_index  = np.argmax(iou_max_score) # indice del maximo coeficiente de IoU
+                        iou = iou_max_score[iou_index] # maximo coeficiente de IoU
+                        clase = clases_iou_max[iou_index] # clase del objeto detectado con el maximo coeficiente de IoU
+                        clase_ref = clases_referencia[iou_index] # clase de la referencia con el maximo coeficiente de IoU
+                        
+                        clases_iou_max.pop(iou_index)
+                        iou_max_score.pop(iou_index)
+
+                        if iou > 0.5 and clase_ref == clase: #Verdadero Positivo
+                            resultados[clase_ref]["TP"] += 1
+                        elif clase_ref != clase and iou > 0.5: #Falso Positivo
+                            resultados[clase_ref]["FP"] += 1
+                        else: #Falso Negativo
+                            resultados[clase_ref]["FN"] += 1
+                    # no hay mas detecciones, hay falsos negativos
+                    else: 
+                        # tomamos primero las referencias con mayor iou ya que son las que tienen mayor probabilidad de ser correctas
+                        # el resto seran falsos negativos
+                        iou_index  = np.argmax(iou_max_score) # indice del maximo coeficiente de IoU
+                        clase_ref = references[iou_index][0] # esta mal
+
+                        clases_iou_max.pop(iou_index)
+                        iou_max_score.pop(iou_index)
+
+                        resultados[clase_ref]["FN"] += 1 # asigna un falso negativo a la clase de la referencia
+
+            # mas detecciones de las esperadas, hay falsos positivos         
+            else:
+                for i in range(1,num_detections+1): 
+                    if i <= len(references): # solo contabiliza hasta las referencias que hay
+                        
+                        # tomamos primero las referencias con mayor iou ya que son las que tienen
+                        # mayor probabilidad de ser correctas el resto seran falsos positivos
+                        iou_index  = np.argmax(iou_max_score) # indice del maximo coeficiente de IoU
+                        iou = iou_max_score[iou_index] # maximo coeficiente de IoU
+                        clase = clases_iou_max[iou_index] # clase del objeto detectado con el maximo coeficiente de IoU
+                        clase_ref = clases_referencia[iou_index]
+
+
+                        clases_iou_max.pop(iou_index)
+                        iou_max_score.pop(iou_index)
+
+                        if iou > 0.5 and clase_ref == clase: #Verdadero Positivo
+                            resultados[clase_ref]["TP"] += 1
+                        elif clase_ref != clase and iou > 0.5: #Falso Positivo
+                            resultados[clase_ref]["FP"] += 1
+                        else: #Falso Negativo
+                            resultados[clase_ref]["FN"] += 1
+                    
+                    # no hay mas referencias, hay falsos positivos
+                    else:
+                        for i in range(num_detections):
+                            if all(matrix_iou[i,:]) == all(np.zeros(num_references)):
+                                resultados[detections[i][0]]["FP"] += 1 # asigna un falso positivo a la clase de la deteccion
+            
+            k = k + 1
+
+            # # file_name = f'/home/pi/TFG-LynxIBDetect/IoU/image_IoU_{j+1}.jpg'
+            file_name = f'/home/pi/TFG-LynxIBDetect/IoU/image_IoU.jpg'
+            j=j+1
+            cv2.imwrite(file_name,image)  # Guardar imagen en un archivo
+
+            #print(f"Archivo XML: {file_name}")
+            print("---------------------------------------------")
+    file.write(f'Total\t{total_elapsed_time}\t\n')
 # Calcular los valores totales de TP, FP, FN
 Tp = sum(conteos["TP"] for conteos in resultados.values())
 Fp = sum(conteos["FP"] for conteos in resultados.values())

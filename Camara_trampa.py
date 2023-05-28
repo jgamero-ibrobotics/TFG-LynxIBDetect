@@ -11,6 +11,7 @@ import glob
 import importlib.util
 import dropbox
 import threading
+import queue
 from dropbox.exceptions import ApiError
 
 
@@ -34,7 +35,6 @@ parser.add_argument('--noshow_results', help='Don\'t show result images (only us
                     action='store_false')
 
 args = parser.parse_args()
-
 
 
 # Parse user inputs
@@ -89,9 +89,8 @@ else: # This is a TF1 model
     boxes_idx, classes_idx, scores_idx = 0, 1, 2
 
 
-
 # Obtén un token de acceso válido para utilizar la API de Dropbox
-TOKEN = 'sl.Beozq37jUeH7SnLxvXQmQSBlnFmJP31phVpbq-AY4-1dMqWrHJfmXHQcGz2U9h6eAww6Tzafio4_oCBI1rhIww3MI9egd8Hsq5kyAczg2yQh9IwUaFsXP5LJCz0Von_CrwJlV2eRy1g'
+TOKEN = 'sl.BfMJETPPlnwsYyWpAfdAr1c5wNhWgYrzJ1o1hLVEFjfDhP9Z3KpsYkfUgKz34VkLeKrmuV8p6Q7jFKDAPYARAbscEqaJ7uktkcISE8oi59yH_2QwVEXMGBSN-CdlCv8fDIDfszEhErk'
 # Crea una instancia del cliente de Dropbox
 dbx = dropbox.Dropbox(TOKEN)
 # Ruta al directorio en Dropbox donde se guardarán las imágenes y los resultados
@@ -118,13 +117,12 @@ def hilo():
         input()  # Esperar a que se presione la tecla Enter
         capture_images(10)
 
-
+imagen_queue = queue.Queue(maxsize=0)
 mutex = threading.Lock()
 capture_thread = threading.Thread(
         target=hilo, args=()
     )
 capture_thread.start()
-
 
 
 # Función para capturar una imagen de la cámara web
@@ -138,7 +136,6 @@ def capture_image():
 # Función para guardar la imagen en un archivo
 def save_image(image, file_name):
     cv2.imwrite(file_name, image)
-   # print(f'Imagen guardada como {file_name}')
 
 # Capturar imágenes después de pulsar una tecla y esperar 10 segundos entre cada captura
 def capture_images(num_images):
@@ -147,120 +144,79 @@ def capture_images(num_images):
             print("HILO1: Esperando 0.5 segundos...") 
             time.sleep(0.5)
         image = capture_image()  # Capturar imagen de la cámara web 
-        file_name = f'/home/pi/TFG-LynxIBDetect/Capturas/image_{i+1}.jpg'
-        mutex.acquire()
-        save_image(image, file_name)  # Guardar imagen en un archivo
-        mutex.release()
+        imagen_queue.put(image,timeout=None)
 
 def process_images():
     global j
-    # Obtener la lista de archivos en el directorio de imágenes
-    mutex.acquire()
-    image_dir = '/home/pi/TFG-LynxIBDetect/Capturas'
-    image_files = [f for f in os.listdir(image_dir) if os.path.isfile(os.path.join(image_dir, f))]
-    mutex.release()
-
-    for image_file  in image_files: # Para cada imagen en el directorio corro detección
-
-        # Obtener la ruta completa de la imagen
-        print(f'HILO2: Procesando imagen {image_file}...')
-        image_path = os.path.join(image_dir, image_file)
-        
-        # Cargar la imagen con OpenCV
-        image = cv2.imread(image_path)
-        os.remove(image_path)
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
-        imH, imW, _ = image.shape 
-        image_resized = cv2.resize(image_rgb, (width, height))
-        input_data = np.expand_dims(image_resized, axis=0)
-        # Normalize pixel values if using a floating model (i.e. if model is non-quantized)
-        if floating_model:
-            input_data = (np.float32(input_data) - input_mean) / input_std
-
-        # Perform the actual detection by running the model with the image as input
-        interpreter.set_tensor(input_details[0]['index'],input_data)
-        interpreter.invoke()
-        
-        # Retrieve detection results
-        boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0] # Bounding box coordinates of detected objects
-        classes = interpreter.get_tensor(output_details[classes_idx]['index'])[0] # Class index of detected objects
-        scores = interpreter.get_tensor(output_details[scores_idx]['index'])[0] # Confidence of detected objects
-
-        detections = []
-
-            # Loop over all detections and draw detection box if confidence is above minimum threshold
-        for i in range(len(scores)):
-            if ((scores[i] > min_conf_threshold) and (scores[i] <= 1.0)):
-
-                    # Get bounding box coordinates and draw box
-                    # Interpreter can return coordinates that are outside of image dimensions, need to force them to be within image using max() and min()
-                    ymin = int(max(1,(boxes[i][0] * imH)))
-                    xmin = int(max(1,(boxes[i][1] * imW)))
-                    ymax = int(min(imH,(boxes[i][2] * imH)))
-                    xmax = int(min(imW,(boxes[i][3] * imW)))
-
-                    cv2.rectangle(image, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
-
-                    # Draw label
-                    object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
-                    label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
-                    labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) # Get font size
-                    label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
-                    cv2.rectangle(image, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in
-                    cv2.putText(image, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
-
-                    detections.append([object_name, scores[i], xmin, ymin, xmax, ymax])
-                    
-        # cv2.imshow('Object detector', image)
-        # # Press any key to continue to next image, or press 'q' to quit
-        # if cv2.waitKey(0) == ord('q'):
-        #     break
-
-        # Get filenames and paths
-        image_fn = os.path.basename("/home/pi/TFG-LynxIBDetect")
-        image_savepath = os.path.join(CWD_PATH,RESULTS_DIR,image_fn)
-        
-        base_fn, ext = os.path.splitext(image_fn)
-        txt_result_fn = base_fn +'.txt'
-        txt_savepath = os.path.join(CWD_PATH,RESULTS_DIR,txt_result_fn)
-
-        if not detections==[]: # Si hay detecciones subo. FILTRO
-            # Save image with bounding boxes and labels
-            file_name = f'/home/pi/TFG-LynxIBDetect/Detections/image_res_{j+1}.jpg'
-            save_image(image, file_name)  # Guardar imagen en un archivo
-
-            # Sube la imagen a Dropbox
-            with open(file_name, 'rb') as f:
-                remote_filename = f'{remote_directory}/image_res_{j+1}.jpg'
-                #print(remote_filename)
-                dbx.files_upload(f.read(), remote_filename)
-            # Elimina el archivo local
-            os.remove(file_name)
-
-            # Guarda los resultados de detección en un archivo
-            # (asumiendo que los resultados están en la variable 'detections')
-            detections_env = []
-            detections_env.append('\n'.join(map(str, detections)))
-            results = ', '.join(detections_env) 
-            results_filename = f'/home/pi/TFG-LynxIBDetect/Detections/results_{j+1}.txt'
-            with open(results_filename, 'w') as f:
-                f.write(results)
-
-            # Sube el archivo de resultados a Dropbox
-            with open(results_filename, 'rb') as f:
-                remote_results_filename = f'{remote_directory}/results_{j+1}.txt'
-                dbx.files_upload(f.read(), remote_results_filename)
-
-            # Elimina el archivo local
-            os.remove(results_filename)
-            j=1+j
-
-
-        # Write results to text file
-        # (Using format defined by https://github.com/Cartucho/mAP, which will make it easy to calculate mAP)
-        # with open(txt_savepath,'w') as f:
-        #     for detection in detections:
-        #         f.write('%s %.4f %d %d %d %d\n' % (detection[0], detection[1], detection[2], detection[3], detection[4], detection[5]))
+    image = imagen_queue.get(block=True, timeout=None)
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  
+    imH, imW, _ = image.shape 
+    image_resized = cv2.resize(image_rgb, (width, height))
+    input_data = np.expand_dims(image_resized, axis=0)
+    # Normalize pixel values if using a floating model (i.e. if model is non-quantized)
+    if floating_model:
+        input_data = (np.float32(input_data) - input_mean) / input_std
+    # Perform the actual detection by running the model with the image as input
+    interpreter.set_tensor(input_details[0]['index'],input_data)
+    interpreter.invoke()
+    
+    # Retrieve detection results
+    boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0] # Bounding box coordinates of detected objects
+    classes = interpreter.get_tensor(output_details[classes_idx]['index'])[0] # Class index of detected objects
+    scores = interpreter.get_tensor(output_details[scores_idx]['index'])[0] # Confidence of detected objects
+    detections = []
+        # Loop over all detections and draw detection box if confidence is above minimum threshold
+    for i in range(len(scores)):
+        if ((scores[i] > min_conf_threshold) and (scores[i] <= 1.0)):
+                # Get bounding box coordinates and draw box
+                # Interpreter can return coordinates that are outside of image dimensions, need to force them to be within image using max() and min()
+                ymin = int(max(1,(boxes[i][0] * imH)))
+                xmin = int(max(1,(boxes[i][1] * imW)))
+                ymax = int(min(imH,(boxes[i][2] * imH)))
+                xmax = int(min(imW,(boxes[i][3] * imW)))
+                cv2.rectangle(image, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
+                # Draw label
+                object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
+                label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
+                labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) # Get font size
+                label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
+                cv2.rectangle(image, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in
+                cv2.putText(image, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
+                detections.append([object_name, scores[i], xmin, ymin, xmax, ymax])
+                
+    # Get filenames and paths
+    image_fn = os.path.basename("/home/pi/TFG-LynxIBDetect")
+    image_savepath = os.path.join(CWD_PATH,RESULTS_DIR,image_fn)
+    
+    base_fn, ext = os.path.splitext(image_fn)
+    txt_result_fn = base_fn +'.txt'
+    txt_savepath = os.path.join(CWD_PATH,RESULTS_DIR,txt_result_fn)
+    if not detections==[]: # Si hay detecciones subo. FILTRO
+        # Save image with bounding boxes and labels
+        file_name = f'/home/pi/TFG-LynxIBDetect/Detections/image_res_{j+1}.jpg'
+        save_image(image, file_name)  # Guardar imagen en un archivo
+        # Sube la imagen a Dropbox
+        with open(file_name, 'rb') as f:
+            remote_filename = f'{remote_directory}/image_res_{j+1}.jpg'
+            #print(remote_filename)
+            dbx.files_upload(f.read(), remote_filename)
+        # Elimina el archivo local
+        os.remove(file_name)
+        # Guarda los resultados de detección en un archivo
+        # (asumiendo que los resultados están en la variable 'detections')
+        detections_env = []
+        detections_env.append('\n'.join(map(str, detections)))
+        results = ', '.join(detections_env) 
+        results_filename = f'/home/pi/TFG-LynxIBDetect/Detections/results_{j+1}.txt'
+        with open(results_filename, 'w') as f:
+            f.write(results)
+        # Sube el archivo de resultados a Dropbox
+        with open(results_filename, 'rb') as f:
+            remote_results_filename = f'{remote_directory}/results_{j+1}.txt'
+            dbx.files_upload(f.read(), remote_results_filename)
+        # Elimina el archivo local
+        os.remove(results_filename)
+        j=1+j
 
 # Llamar a la función para capturar una imagen después de pulsar una tecla y esperar 10 segundos entre cada captura
 j=0
