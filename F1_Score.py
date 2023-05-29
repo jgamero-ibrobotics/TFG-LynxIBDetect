@@ -193,7 +193,7 @@ else: # This is a TF1 model
 
 
 # Configuración de Dropbox
-access_token = 'sl.BfMJETPPlnwsYyWpAfdAr1c5wNhWgYrzJ1o1hLVEFjfDhP9Z3KpsYkfUgKz34VkLeKrmuV8p6Q7jFKDAPYARAbscEqaJ7uktkcISE8oi59yH_2QwVEXMGBSN-CdlCv8fDIDfszEhErk'
+access_token = ''
 dropbox_folder_xml = '/pruebaXML'
 dropbox_folder_jpg = '/pruebaJPG'
 # dropbox_folder_xml = '/prueba _lince_pocaluzXML'
@@ -259,7 +259,7 @@ with open(archivo_resultados_rendimiento, 'w') as file:
             image = cv2.imread(image_path)
 
             if darken_image == True:
-                image = darken_if_dark_image(image, 255, 0.75) # 1 0.85 0.8 0.75 0.7 0.65 0.6 0.55 0.5 0.45 0.4 0.35 0.2 0.15
+                image = darken_if_dark_image(image, 255, 0.85) # 1 0.85 0.8 0.75 0.7 0.65 0.6 0.55 0.5 0.45 0.4 0.35 0.2 0.15
          #                                                      1   2    3   4    5   6    7   8    9    10  11   12  13  14
                 cv2.imwrite("/home/pi/TFG-LynxIBDetect/IoU/image_darken.jpg", image)
 
