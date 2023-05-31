@@ -2,27 +2,27 @@
 --------------RESULTADOS POR CLASE--------------
 person-like
 Verdaderos Positivos (TP): 121
-Falsos Positivos (FP): 6
-Falsos Negativos (FN): 31
-Precision: 0.952755905511811
-Recall: 0.7960526315789473
-F1 Score: 0.8673835125448028
+Falsos Positivos (FP): 7
+Falsos Negativos (FN): 30
+Precision: 0.9453125
+Recall: 0.8013245033112583
+F1 Score: 0.867383512544803
 ---------------------------------------------
 person
-Verdaderos Positivos (TP): 115
-Falsos Positivos (FP): 19
-Falsos Negativos (FN): 22
-Precision: 0.8582089552238806
-Recall: 0.8394160583941606
-F1 Score: 0.8487084870848708
+Verdaderos Positivos (TP): 117
+Falsos Positivos (FP): 12
+Falsos Negativos (FN): 19
+Precision: 0.9069767441860465
+Recall: 0.8602941176470589
+F1 Score: 0.8830188679245283
 ---------------------------------------------
 Lynx pardinus
-Verdaderos Positivos (TP): 31
+Verdaderos Positivos (TP): 30
 Falsos Positivos (FP): 2
-Falsos Negativos (FN): 4
-Precision: 0.9393939393939394
-Recall: 0.8857142857142857
-F1 Score: 0.9117647058823529
+Falsos Negativos (FN): 5
+Precision: 0.9375
+Recall: 0.8571428571428571
+F1 Score: 0.8955223880597014
 ---------------------------------------------
 Fox
 Verdaderos Positivos (TP): 24
@@ -42,18 +42,18 @@ F1 Score: 0.9591836734693877
 ---------------------------------------------
 Cat
 Verdaderos Positivos (TP): 166
-Falsos Positivos (FP): 2
+Falsos Positivos (FP): 1
 Falsos Negativos (FN): 6
-Precision: 0.9880952380952381
+Precision: 0.9940119760479041
 Recall: 0.9651162790697675
-F1 Score: 0.9764705882352942
+F1 Score: 0.9793510324483776
 ---------------------------------------------
 
 --------------RESULTADOS GLOBALES--------------
-Verdaderos Positivos: 504
-Falsos Positivos: 32
-Falsos Negativos: 65
-Precision: 0.9402985074626866
-Recall: 0.8857644991212654
-F1 Score: 0.9122171945701358
+Verdaderos Positivos: 505
+Falsos Positivos: 25
+Falsos Negativos: 62
+Precision: 0.9528301886792453
+Recall: 0.890652557319224
+F1 Score: 0.9206927985414768
 ---------------------------------------------

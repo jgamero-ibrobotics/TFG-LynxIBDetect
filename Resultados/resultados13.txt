@@ -1,59 +1,59 @@
 
 --------------RESULTADOS POR CLASE--------------
 person-like
-Verdaderos Positivos (TP): 88
-Falsos Positivos (FP): 8
-Falsos Negativos (FN): 60
-Precision: 0.9166666666666666
-Recall: 0.5945945945945946
-F1 Score: 0.7213114754098361
+Verdaderos Positivos (TP): 118
+Falsos Positivos (FP): 3
+Falsos Negativos (FN): 35
+Precision: 0.9752066115702479
+Recall: 0.7712418300653595
+F1 Score: 0.8613138686131386
 ---------------------------------------------
 person
-Verdaderos Positivos (TP): 89
-Falsos Positivos (FP): 10
-Falsos Negativos (FN): 46
-Precision: 0.898989898989899
-Recall: 0.6592592592592592
-F1 Score: 0.7606837606837606
+Verdaderos Positivos (TP): 114
+Falsos Positivos (FP): 31
+Falsos Negativos (FN): 24
+Precision: 0.7862068965517242
+Recall: 0.8260869565217391
+F1 Score: 0.8056537102473499
 ---------------------------------------------
 Lynx pardinus
-Verdaderos Positivos (TP): 29
-Falsos Positivos (FP): 2
-Falsos Negativos (FN): 8
-Precision: 0.9354838709677419
-Recall: 0.7837837837837838
-F1 Score: 0.8529411764705881
+Verdaderos Positivos (TP): 31
+Falsos Positivos (FP): 3
+Falsos Negativos (FN): 4
+Precision: 0.9117647058823529
+Recall: 0.8857142857142857
+F1 Score: 0.8985507246376812
 ---------------------------------------------
 Fox
-Verdaderos Positivos (TP): 11
-Falsos Positivos (FP): 12
-Falsos Negativos (FN): 2
-Precision: 0.4782608695652174
-Recall: 0.8461538461538461
-F1 Score: 0.6111111111111112
+Verdaderos Positivos (TP): 23
+Falsos Positivos (FP): 1
+Falsos Negativos (FN): 1
+Precision: 0.9583333333333334
+Recall: 0.9583333333333334
+F1 Score: 0.9583333333333334
 ---------------------------------------------
 Rabbit
-Verdaderos Positivos (TP): 39
-Falsos Positivos (FP): 6
-Falsos Negativos (FN): 8
-Precision: 0.8666666666666667
-Recall: 0.8297872340425532
-F1 Score: 0.8478260869565217
+Verdaderos Positivos (TP): 45
+Falsos Positivos (FP): 4
+Falsos Negativos (FN): 2
+Precision: 0.9183673469387755
+Recall: 0.9574468085106383
+F1 Score: 0.9375000000000001
 ---------------------------------------------
 Cat
-Verdaderos Positivos (TP): 152
-Falsos Positivos (FP): 14
-Falsos Negativos (FN): 17
-Precision: 0.9156626506024096
-Recall: 0.8994082840236687
-F1 Score: 0.9074626865671641
+Verdaderos Positivos (TP): 165
+Falsos Positivos (FP): 1
+Falsos Negativos (FN): 7
+Precision: 0.9939759036144579
+Recall: 0.9593023255813954
+F1 Score: 0.9763313609467456
 ---------------------------------------------
 
 --------------RESULTADOS GLOBALES--------------
-Verdaderos Positivos: 408
-Falsos Positivos: 52
-Falsos Negativos: 141
-Precision: 0.8869565217391304
-Recall: 0.7431693989071039
-F1 Score: 0.8087215064420218
+Verdaderos Positivos: 496
+Falsos Positivos: 43
+Falsos Negativos: 73
+Precision: 0.9202226345083488
+Recall: 0.8717047451669596
+F1 Score: 0.8953068592057762
 ---------------------------------------------

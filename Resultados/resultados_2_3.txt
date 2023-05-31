@@ -1,0 +1,59 @@
+
+--------------RESULTADOS POR CLASE--------------
+person-like
+Verdaderos Positivos (TP): 130
+Falsos Positivos (FP): 46
+Falsos Negativos (FN): 20
+Precision: 0.7386363636363636
+Recall: 0.8666666666666667
+F1 Score: 0.7975460122699386
+---------------------------------------------
+person
+Verdaderos Positivos (TP): 116
+Falsos Positivos (FP): 42
+Falsos Negativos (FN): 21
+Precision: 0.7341772151898734
+Recall: 0.8467153284671532
+F1 Score: 0.7864406779661016
+---------------------------------------------
+Lynx pardinus
+Verdaderos Positivos (TP): 31
+Falsos Positivos (FP): 2
+Falsos Negativos (FN): 4
+Precision: 0.9393939393939394
+Recall: 0.8857142857142857
+F1 Score: 0.9117647058823529
+---------------------------------------------
+Fox
+Verdaderos Positivos (TP): 23
+Falsos Positivos (FP): 1
+Falsos Negativos (FN): 1
+Precision: 0.9583333333333334
+Recall: 0.9583333333333334
+F1 Score: 0.9583333333333334
+---------------------------------------------
+Rabbit
+Verdaderos Positivos (TP): 47
+Falsos Positivos (FP): 3
+Falsos Negativos (FN): 2
+Precision: 0.94
+Recall: 0.9591836734693877
+F1 Score: 0.9494949494949495
+---------------------------------------------
+Cat
+Verdaderos Positivos (TP): 167
+Falsos Positivos (FP): 15
+Falsos Negativos (FN): 5
+Precision: 0.9175824175824175
+Recall: 0.9709302325581395
+F1 Score: 0.943502824858757
+---------------------------------------------
+
+--------------RESULTADOS GLOBALES--------------
+Verdaderos Positivos: 514
+Falsos Positivos: 109
+Falsos Negativos: 53
+Precision: 0.8250401284109149
+Recall: 0.9065255731922398
+F1 Score: 0.8638655462184873
+---------------------------------------------

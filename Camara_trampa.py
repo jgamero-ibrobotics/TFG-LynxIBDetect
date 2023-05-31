@@ -90,7 +90,7 @@ else: # This is a TF1 model
 
 
 # Obtén un token de acceso válido para utilizar la API de Dropbox
-TOKEN = 'sl.BfMJETPPlnwsYyWpAfdAr1c5wNhWgYrzJ1o1hLVEFjfDhP9Z3KpsYkfUgKz34VkLeKrmuV8p6Q7jFKDAPYARAbscEqaJ7uktkcISE8oi59yH_2QwVEXMGBSN-CdlCv8fDIDfszEhErk'
+TOKEN = 'sl.Bfb4XTOmCE2i0tqE3KgT4__IcvNqCyqY1k55oU7jUNapU3LmKvJsSl9xdkeWoK8rPFX9m6kD4e7aJOwhD0962lCRDzy2ZDCvXN6RES_kLoMZyZW1lXNQd6tExNWW-cqomzoAb39bpBk'
 # Crea una instancia del cliente de Dropbox
 dbx = dropbox.Dropbox(TOKEN)
 # Ruta al directorio en Dropbox donde se guardarán las imágenes y los resultados
@@ -193,11 +193,11 @@ def process_images():
     txt_savepath = os.path.join(CWD_PATH,RESULTS_DIR,txt_result_fn)
     if not detections==[]: # Si hay detecciones subo. FILTRO
         # Save image with bounding boxes and labels
-        file_name = f'/home/pi/TFG-LynxIBDetect/Detections/image_res_{j+1}.jpg'
+        file_name = f'/home/pi/TFG-LynxIBDetect/Detections/image{j+1}.jpg'
         save_image(image, file_name)  # Guardar imagen en un archivo
         # Sube la imagen a Dropbox
         with open(file_name, 'rb') as f:
-            remote_filename = f'{remote_directory}/image_res_{j+1}.jpg'
+            remote_filename = f'{remote_directory}/image{j+1}.jpg'
             #print(remote_filename)
             dbx.files_upload(f.read(), remote_filename)
         # Elimina el archivo local
@@ -207,12 +207,12 @@ def process_images():
         detections_env = []
         detections_env.append('\n'.join(map(str, detections)))
         results = ', '.join(detections_env) 
-        results_filename = f'/home/pi/TFG-LynxIBDetect/Detections/results_{j+1}.txt'
+        results_filename = f'/home/pi/TFG-LynxIBDetect/Detections/results_image{j+1}.txt'
         with open(results_filename, 'w') as f:
             f.write(results)
         # Sube el archivo de resultados a Dropbox
         with open(results_filename, 'rb') as f:
-            remote_results_filename = f'{remote_directory}/results_{j+1}.txt'
+            remote_results_filename = f'{remote_directory}/results_image{j+1}.txt'
             dbx.files_upload(f.read(), remote_results_filename)
         # Elimina el archivo local
         os.remove(results_filename)

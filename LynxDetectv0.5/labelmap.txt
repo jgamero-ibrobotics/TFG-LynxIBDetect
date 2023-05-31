@@ -1,0 +1,6 @@
+person-like
+person
+Lynx pardinus
+Fox
+Rabbit
+Cat

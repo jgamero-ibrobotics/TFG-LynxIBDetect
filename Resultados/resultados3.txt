@@ -33,20 +33,20 @@ Recall: 0.96
 F1 Score: 0.96
 ---------------------------------------------
 Rabbit
-Verdaderos Positivos (TP): 47
+Verdaderos Positivos (TP): 48
 Falsos Positivos (FP): 2
-Falsos Negativos (FN): 2
-Precision: 0.9591836734693877
-Recall: 0.9591836734693877
-F1 Score: 0.9591836734693877
+Falsos Negativos (FN): 1
+Precision: 0.96
+Recall: 0.9795918367346939
+F1 Score: 0.9696969696969697
 ---------------------------------------------
 Cat
-Verdaderos Positivos (TP): 166
+Verdaderos Positivos (TP): 165
 Falsos Positivos (FP): 0
-Falsos Negativos (FN): 6
+Falsos Negativos (FN): 7
 Precision: 1.0
-Recall: 0.9651162790697675
-F1 Score: 0.9822485207100593
+Recall: 0.9593023255813954
+F1 Score: 0.9792284866468843
 ---------------------------------------------
 
 --------------RESULTADOS GLOBALES--------------
