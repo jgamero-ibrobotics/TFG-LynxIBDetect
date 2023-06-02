@@ -16,7 +16,7 @@ def elimina_no_maximos(matriz, col, indice_preservar):
             matriz[i,col] = 0
     return matriz
 
-def darken_if_dark_image(image, threshold_brightness, darkness_factor):
+def darken_image(image, threshold_brightness, darkness_factor):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     brightness = np.mean(gray_image)
 
@@ -130,7 +130,7 @@ parser.add_argument('--save_results', help='Save labeled images and annotation d
 parser.add_argument('--noshow_results', help='Don\'t show result images (only use this if --save_results is enabled)',
                     action='store_false')
 parser.add_argument('--darken_image', help='Darken image for testing in low light conditions',
-                    action='store_true')
+                    default=1)
 parser.add_argument('--archivo_resultados', help='Nombre del archivo donde se guardan los resultados',
                     default='resultados.txt')
 
@@ -141,7 +141,9 @@ args = parser.parse_args()
 MODEL_NAME = args.modeldir
 GRAPH_NAME = args.graph
 LABELMAP_NAME = args.labels
-darken_image = args.darken_image
+
+FO = float(args.darken_image)
+
 archivo_resultados = '/home/pi/TFG-LynxIBDetect/Resultados/' + args.archivo_resultados
 archivo_resultados_rendimiento = '/home/pi/TFG-LynxIBDetect/Resultados/' + 'Rendimiento.txt'
 
@@ -193,7 +195,7 @@ else: # This is a TF1 model
 
 
 # Configuración de Dropbox
-access_token = 'sl.BfWlg31n6sTGrkGm17ZsJ0xoCL3OgIYv6tbLulh0Rzp-6UG8Spo8bHkjsJ24sPbD7wJ6P0GIzsXYeqbUwKdQ9QO1rZPlicb0NuGwLod8Hy-Vkp3UjFGN_nCrRpRiBG1AaaV5ynNmhL4'
+access_token = 'sl.Bfir1Hjr9yvmr__nbtKzYVdG46EfOdGtnnXPPUvT7WRkIuREdpDrbwhVokdcCiS7UnNuggUAs5_t4peyFVAvknJtcMo9NJgXOtOoFckOi9agc-qY2AHEps3iD8hUPNAeqnqWKNFM-cE'
 dropbox_folder_xml = '/pruebaXML'
 dropbox_folder_jpg = '/pruebaJPG'
 # dropbox_folder_xml = '/prueba _lince_pocaluzXML'
@@ -258,13 +260,10 @@ with open(archivo_resultados_rendimiento, 'w') as file:
             # Aplicar el modelo de detección y obtener las predicciones de boxB
             image = cv2.imread(image_path)
 
-            if darken_image == True:
-             # image = darken_if_dark_image(image, 255, 0.85) # 1 0.85 0.8 0.75 0.7 0.65 0.6 0.55 0.5 0.45 0.4 0.35 0.2 0.15
-         #                                                      1   2    3   4    5   6    7   8    9    10  11   12  13  14
+  
 
-                image = darken_if_dark_image(image, 255, 1) # 1 0.95 0.9 0.85 0.8 0.75 0.7 0.65 0.6 0.55 0.5 0.45 0.4 0.35 0.3 0.25 0.2 0.15
-         #                                                         1           4    5   6    7   8    9   10   11  12  13  14  15  16  17  18
-                cv2.imwrite("/home/pi/TFG-LynxIBDetect/IoU/image_darken.jpg", image)
+            image = darken_image(image, 255, FO)                                                          
+            #cv2.imwrite("/home/pi/TFG-LynxIBDetect/IoU/image_darken.jpg", image)
 
 
             detections = apply_detection_model(image)
