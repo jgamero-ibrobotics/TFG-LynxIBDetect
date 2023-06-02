@@ -1,3 +1,16 @@
+# Codigo para el calculo automatico del F1 Score
+# para un modelo corriendo en TFlite, bajo
+# diferentes condiciones luz 
+
+# Creado: 29 Abr 2023
+# Última modificación: 02 jun 2023
+
+# @author: Jesús Gamero Borrego
+
+#-----------------------------------------------------------------------------------------
+
+
+
 import os
 import dropbox
 import importlib.util

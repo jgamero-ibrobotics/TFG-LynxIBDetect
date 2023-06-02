@@ -1,3 +1,12 @@
+# Codigo para graficar los resultados de los recursos del sistema
+
+# Creado: 29 Abr 2023
+# Última modificación: 02 jun 2023
+
+# @author: Jesús Gamero Borrego
+
+#-----------------------------------------------------------------------------------------
+
 import time
 import sys
 import matplotlib.pyplot as plt

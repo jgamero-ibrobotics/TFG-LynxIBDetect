@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
 
+# Código para la simulación de una cámara trampa con una Raspberry Pi
+# asi como para la detección de objetos en las imágenes capturadas 
+
+# Creado: 27 Abr 2023
+# Última modificación: 02 jun 2023
+
+# @author: Jesús Gamero Borrego
+
+#-----------------------------------------------------------------------------------------
+
 # Import packages
 import os
 import argparse
@@ -90,7 +100,7 @@ else: # This is a TF1 model
 
 
 # Obtén un token de acceso válido para utilizar la API de Dropbox
-TOKEN = 'sl.Bfb4XTOmCE2i0tqE3KgT4__IcvNqCyqY1k55oU7jUNapU3LmKvJsSl9xdkeWoK8rPFX9m6kD4e7aJOwhD0962lCRDzy2ZDCvXN6RES_kLoMZyZW1lXNQd6tExNWW-cqomzoAb39bpBk'
+TOKEN = 'sl.Bfg-B5v-2JGRSkmes8jUFZ-lLjYkD3Dm-dnUET_W33eev1iNwAViMkqsYI2qCWmAuUTnbKw4DJrqn05eW9jcrvGfQ22nnwABy9bU7tDyYZLQ3_OrQp0V_bWkhgkFeHoZOdmQAqF9zcY'
 # Crea una instancia del cliente de Dropbox
 dbx = dropbox.Dropbox(TOKEN)
 # Ruta al directorio en Dropbox donde se guardarán las imágenes y los resultados

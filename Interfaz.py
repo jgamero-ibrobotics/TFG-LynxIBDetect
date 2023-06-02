@@ -1,3 +1,16 @@
+# Código para la interfaz gráfica de la aplicación LynxDetect
+# permite visualizar todas las imagenes que has resultado positivas 
+# en la detección las cuales se encuentran en la carpeta compartida
+# de Dropbox. Además, se muestra la información de cada imagen y 
+# la información total de todas las imágenes detectadas.
+
+# Creado: 10 may 2023
+# Última modificación: 02 jun 2023
+
+# @author: Jesús Gamero Borrego
+
+#-----------------------------------------------------------------------------------------
+
 import sys
 import os
 import dropbox

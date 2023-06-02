@@ -1,3 +1,13 @@
+# Código para registrar los recursos del sistema en un archivo de texto 
+
+# Creado: 27 May 2023
+# Última modificación: 02 jun 2023
+
+# @author: Jesús Gamero Borrego
+
+#-----------------------------------------------------------------------------------------
+
+
 import psutil
 import time
 import sys
