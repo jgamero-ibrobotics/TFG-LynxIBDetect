@@ -11,6 +11,9 @@ sudo apt-get -y install libatlas-base-dev
 # Need to get an older version of OpenCV because version 4 has errors
 pip3 install opencv-python==3.4.11.41
 
+pip3 install dropbox
+
+
 # Get packages required for TensorFlow
 # Using the tflite_runtime packages available at https://www.tensorflow.org/lite/guide/python
 # Will change to just 'pip3 install tensorflow' once newer versions of TF are added to piwheels
