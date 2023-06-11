@@ -47,5 +47,5 @@ bash get_pi_requirements.sh
 Runing the main script that simulates the camera trap behaviour:
 
 ```bash
-python3 captura_com.py --modeldir=LynxDetectv2
+python3 Camara_trampa.py --modeldir=LynxDetectv2
 ```
