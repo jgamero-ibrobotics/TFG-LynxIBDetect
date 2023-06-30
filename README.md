@@ -2,6 +2,7 @@
 ![Project Logo](/figuras/figura.gif)
 
 TFG-LynxIBDetect is a project developed as part of a Final Degree Project (TFG) by Jesús Gamero. The project focuses on the detection of the Iberian Lynx, an endangered species native to the Iberian Peninsula, using a camera and advanced computer vision techniques.
+Dataset used for training available at the following link: https://www.kaggle.com/datasets/jessgameroborrego/tfg-lynxibdetect 
 
 
 ## Installation
